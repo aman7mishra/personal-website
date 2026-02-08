@@ -23,12 +23,18 @@ body {
     background: var(--light-pink);
     font-family: Arial, sans-serif;
     overflow: hidden;
+    position: relative;
 }
 
 .sticker {
     position: absolute;
-    font-size: 3rem;
-    opacity: 0.7;
+    width: 120px; 
+    height: auto;
+    opacity: 0.9;
+    z-index: 1;
+    user-select: none;
+    pointer-events: none;
+    filter: drop-shadow(5px 5px 5px rgba(0,0,0,0.1));
 }
 
 .card {
@@ -42,21 +48,7 @@ body {
     z-index: 10;
 }
 
-/* ✨ Bounce + Glow Animation */
-.celebrate {
-    animation: bounceGlow 1s ease forwards;
-}
-
-@keyframes bounceGlow {
-    0% { transform: scale(1); box-shadow: 0 15px 40px rgba(0,0,0,0.1); }
-    30% { transform: scale(1.08); box-shadow: 0 0 40px rgba(255,77,109,0.6); }
-    100% { transform: scale(1); box-shadow: 0 0 30px rgba(255,77,109,0.4); }
-}
-
-h1 {
-    color: var(--dark-red);
-    margin-bottom: 20px;
-}
+h1 { color: var(--dark-red); margin-bottom: 20px; }
 
 .button-box {
     position: relative;
@@ -77,32 +69,21 @@ h1 {
     transform: translate(-50%, -50%);
 }
 
-/* Adjusted Left positions to center the PAIR */
-#yesBtn {
-    background: var(--pink);
-    color: white;
-    left: 32%; /* Moved left to balance the No button */
-    z-index: 20;
-}
+#yesBtn { background: var(--pink); color: white; left: 32%; z-index: 20; }
+#noBtn { background: #f0f0f0; color: #666; left: 68%; transition: all 0.2s ease; z-index: 19; }
 
-#noBtn {
-    background: #f0f0f0;
-    color: #666;
-    left: 68%; /* Moved right to balance the Yes button */
-    transition: all 0.2s ease;
-    z-index: 19;
-}
+.celebrate { animation: bounce 0.5s ease infinite alternate; }
+@keyframes bounce { from { transform: scale(1); } to { transform: scale(1.05); } }
 </style>
 </head>
 
 <body>
 
-<div class="sticker" style="top:10%; left:10%;">💖</div>
-<div class="sticker" style="bottom:15%; right:10%;">🌹</div>
+<div id="sticker-container"></div>
 
 <div class="card" id="mainCard">
-    <h1>Will you be my Valentine? 🥺</h1>
-
+    <h1>Hey Sakshi</h1>
+    <h2>Will you be my Valentine? 🥺</h2>
     <div class="button-box" id="arena">
         <button class="btn" id="yesBtn">Yes!</button>
         <button class="btn" id="noBtn">No</button>
@@ -110,69 +91,86 @@ h1 {
 </div>
 
 <script>
+const card = document.getElementById('mainCard');
 const noBtn = document.getElementById('noBtn');
 const yesBtn = document.getElementById('yesBtn');
 const arena = document.getElementById('arena');
-const card = document.getElementById('mainCard');
+const stickerContainer = document.getElementById('sticker-container');
+
+/**
+ * 1. DYNAMIC IMAGE LOADING
+ * This tries to load images named 1.webp, 2.webp, etc. from your folder.
+ */
+async function loadStickers() {
+    const cardRect = card.getBoundingClientRect();
+    const maxStickers = 12; // Maximum attempts
+    const folder = 'stickers/';
+    const extension = '.webp'; 
+    
+    // We'll use a 4x3 grid for even distribution
+    const cols = 4;
+    const rows = 3;
+    const cellW = window.innerWidth / cols;
+    const cellH = window.innerHeight / rows;
+
+    for (let i = 1; i <= maxStickers; i++) {
+        const img = new Image();
+        img.src = `${folder}${i}${extension}`;
+        
+        // Only place the sticker if the file actually exists
+        img.onload = function() {
+            const stickerImg = document.createElement('img');
+            stickerImg.src = img.src;
+            stickerImg.className = 'sticker';
+            
+            // Grid logic for even spread
+            const col = (i - 1) % cols;
+            const row = Math.floor((i - 1) / cols);
+            
+            const cellX = col * cellW;
+            const cellY = row * cellH;
+            
+            // Jitter within the cell
+            let x = cellX + Math.random() * (cellW - 130);
+            let y = cellY + Math.random() * (cellH - 130);
+
+            // Simple Card Avoidance
+            if (x + 130 > cardRect.left && x < cardRect.right && y + 130 > cardRect.top && y < cardRect.bottom) {
+                x = (x < window.innerWidth/2) ? 20 : window.innerWidth - 150;
+            }
+
+            stickerImg.style.left = `${x}px`;
+            stickerImg.style.top = `${y}px`;
+            stickerImg.style.transform = `rotate(${Math.random() * 40 - 20}deg)`;
+            
+            stickerContainer.appendChild(stickerImg);
+        };
+    }
+}
+
+// Initialize
+window.addEventListener('load', loadStickers);
 
 /* NO BUTTON DODGE */
 noBtn.addEventListener('mouseover', () => {
     const arenaRect = arena.getBoundingClientRect();
-    
-    // We remove the centering transform so our random X/Y works accurately
     noBtn.style.transform = "none"; 
-    
     const maxX = arenaRect.width - noBtn.offsetWidth;
     const maxY = arenaRect.height - noBtn.offsetHeight;
-
     let x = Math.random() * maxX;
     let y = Math.random() * maxY;
-
-    // Keep away from YES button (which is roughly at 32% width)
     const yesAreaX = arenaRect.width * 0.32;
-    if (Math.abs(x - yesAreaX) < 100) {
-        x = x < yesAreaX ? 5 : maxX - 5;
-    }
-
+    if (Math.abs(x - yesAreaX) < 100) x = x < yesAreaX ? 5 : maxX - 5;
     noBtn.style.left = `${x}px`;
     noBtn.style.top = `${y}px`;
 });
 
 /* YES BUTTON CLICK */
 yesBtn.addEventListener('click', () => {
+    confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
     card.classList.add('celebrate');
-
-    // Multi-shot Confetti
-    const duration = 1500;
-    const end = Date.now() + duration;
-
-    (function frame() {
-        confetti({
-            particleCount: 7,
-            spread: 60,
-            origin: { x: 0 },
-            zIndex: 9999,
-            colors: ['#ff4d6d', '#ff758f', '#ffffff']
-        });
-        confetti({
-            particleCount: 7,
-            spread: 60,
-            origin: { x: 1 },
-            zIndex: 9999,
-            colors: ['#ff4d6d', '#ff758f', '#ffffff']
-        });
-
-        if (Date.now() < end) {
-            requestAnimationFrame(frame);
-        }
-    })();
-
     setTimeout(() => {
-        card.innerHTML = `
-            <h1 style="font-size:3rem;">YAY! ❤️</h1>
-            <p style="font-size:1.2rem; color:#ff4d6d;">I'm so happy!</p>
-            <div style="font-size:4rem; margin-top:20px;">🥰🌹✨</div>
-        `;
+        card.innerHTML = `<h1 style="font-size:3rem;">YAY! ❤️</h1><p style="font-size:1.2rem; color:#ff4d6d;">Best decision ever!</p><div style="font-size:4rem; margin-top:20px;">🥰🌹✨</div>`;
     }, 350);
 });
 </script>
