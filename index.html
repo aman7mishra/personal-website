@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Be My Valentine?</title>
+
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+<style>
+:root {
+    --pink: #ff4d6d;
+    --light-pink: #fff0f3;
+    --dark-red: #800f2f;
+}
+
+body {
+    margin: 0;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--light-pink);
+    font-family: Arial, sans-serif;
+    overflow: hidden;
+}
+
+.sticker {
+    position: absolute;
+    font-size: 3rem;
+    opacity: 0.7;
+}
+
+.card {
+    background: white;
+    padding: 50px;
+    border-radius: 40px;
+    width: 400px;
+    text-align: center;
+    border: 8px solid white;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.1);
+    z-index: 10;
+}
+
+/* ✨ Bounce + Glow Animation */
+.celebrate {
+    animation: bounceGlow 1s ease forwards;
+}
+
+@keyframes bounceGlow {
+    0% { transform: scale(1); box-shadow: 0 15px 40px rgba(0,0,0,0.1); }
+    30% { transform: scale(1.08); box-shadow: 0 0 40px rgba(255,77,109,0.6); }
+    100% { transform: scale(1); box-shadow: 0 0 30px rgba(255,77,109,0.4); }
+}
+
+h1 {
+    color: var(--dark-red);
+    margin-bottom: 20px;
+}
+
+.button-box {
+    position: relative;
+    width: 100%;
+    height: 120px;
+    margin-top: 25px;
+}
+
+.btn {
+    padding: 15px 35px;
+    font-size: 1.2rem;
+    font-weight: bold;
+    border: none;
+    border-radius: 15px;
+    cursor: pointer;
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+}
+
+/* Adjusted Left positions to center the PAIR */
+#yesBtn {
+    background: var(--pink);
+    color: white;
+    left: 32%; /* Moved left to balance the No button */
+    z-index: 20;
+}
+
+#noBtn {
+    background: #f0f0f0;
+    color: #666;
+    left: 68%; /* Moved right to balance the Yes button */
+    transition: all 0.2s ease;
+    z-index: 19;
+}
+</style>
+</head>
+
+<body>
+
+<div class="sticker" style="top:10%; left:10%;">💖</div>
+<div class="sticker" style="bottom:15%; right:10%;">🌹</div>
+
+<div class="card" id="mainCard">
+    <h1>Will you be my Valentine? 🥺</h1>
+
+    <div class="button-box" id="arena">
+        <button class="btn" id="yesBtn">Yes!</button>
+        <button class="btn" id="noBtn">No</button>
+    </div>
+</div>
+
+<script>
+const noBtn = document.getElementById('noBtn');
+const yesBtn = document.getElementById('yesBtn');
+const arena = document.getElementById('arena');
+const card = document.getElementById('mainCard');
+
+/* NO BUTTON DODGE */
+noBtn.addEventListener('mouseover', () => {
+    const arenaRect = arena.getBoundingClientRect();
+    
+    // We remove the centering transform so our random X/Y works accurately
+    noBtn.style.transform = "none"; 
+    
+    const maxX = arenaRect.width - noBtn.offsetWidth;
+    const maxY = arenaRect.height - noBtn.offsetHeight;
+
+    let x = Math.random() * maxX;
+    let y = Math.random() * maxY;
+
+    // Keep away from YES button (which is roughly at 32% width)
+    const yesAreaX = arenaRect.width * 0.32;
+    if (Math.abs(x - yesAreaX) < 100) {
+        x = x < yesAreaX ? 5 : maxX - 5;
+    }
+
+    noBtn.style.left = `${x}px`;
+    noBtn.style.top = `${y}px`;
+});
+
+/* YES BUTTON CLICK */
+yesBtn.addEventListener('click', () => {
+    card.classList.add('celebrate');
+
+    // Multi-shot Confetti
+    const duration = 1500;
+    const end = Date.now() + duration;
+
+    (function frame() {
+        confetti({
+            particleCount: 7,
+            spread: 60,
+            origin: { x: 0 },
+            zIndex: 9999,
+            colors: ['#ff4d6d', '#ff758f', '#ffffff']
+        });
+        confetti({
+            particleCount: 7,
+            spread: 60,
+            origin: { x: 1 },
+            zIndex: 9999,
+            colors: ['#ff4d6d', '#ff758f', '#ffffff']
+        });
+
+        if (Date.now() < end) {
+            requestAnimationFrame(frame);
+        }
+    })();
+
+    setTimeout(() => {
+        card.innerHTML = `
+            <h1 style="font-size:3rem;">YAY! ❤️</h1>
+            <p style="font-size:1.2rem; color:#ff4d6d;">I'm so happy!</p>
+            <div style="font-size:4rem; margin-top:20px;">🥰🌹✨</div>
+        `;
+    }, 350);
+});
+</script>
+</body>
+</html>
